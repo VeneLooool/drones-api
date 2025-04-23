@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package drones_api.api.v1.model;
+
+option go_package = "github.com/VeneLooool/drones-api/pkg/api/v1/model;model";
+
+message Drone {
+  uint64 id = 1;
+  string name = 2;
+  string status = 3;
+}

@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package drones_api.api.v1.drones;
+
+option go_package = "github.com/VeneLooool/drones-api/pkg/api/v1/drones;drones";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "api/v1/model/drones.proto";
+
+service Drones {
+  rpc CreateDrone(CreateDrone.Request) returns (CreateDrone.Response) {
+    option (google.api.http) = {
+      post: "/v1/drones"
+      body: "*"
+    };
+  }
+  rpc UpdateDrone(UpdateDrone.Request) returns (UpdateDrone.Response) {
+    option (google.api.http) = {
+      put: "/v1/drones/{id}"
+      body: "*"
+    };
+  }
+  rpc GetDroneByID(GetDroneByID.Request) returns (GetDroneByID.Response) {
+    option (google.api.http) = {
+      get: "/v1/drones/{id}"
+    };
+  }
+  rpc DeleteDrone(DeleteDrone.Request) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/drones/{id}"
+    };
+  }
+}
+
+message CreateDrone {
+  message Request {
+    string name = 1;
+  }
+  message Response {
+    model.Drone drone = 1;
+  }
+}
+
+message UpdateDrone {
+  message Request {
+    uint64 id = 1;
+    string name = 2;
+    string status = 3;
+  }
+  message Response {
+    model.Drone drone = 1;
+  }
+}
+
+message GetDroneByID {
+  message Request {
+    uint64 id = 1;
+  }
+  message Response {
+    model.Drone drone = 1;
+  }
+}
+
+message DeleteDrone {
+  message Request {
+    uint64 id = 1;
+  }
+}

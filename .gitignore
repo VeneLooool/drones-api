@@ -1,0 +1,7 @@
+/vendor
+/vendor.pb
+/vendor.protogen
+/.idea
+/.vscode
+.env
+drones-api
