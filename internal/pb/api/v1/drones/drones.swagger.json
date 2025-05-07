@@ -48,6 +48,36 @@
         ]
       }
     },
+    "/v1/drones/authors/{login}": {
+      "get": {
+        "operationId": "Drones_GetDronesByAuthor",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dronesGetDronesByAuthorResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "login",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Drones"
+        ]
+      }
+    },
     "/v1/drones/{id}": {
       "get": {
         "operationId": "Drones_GetDroneByID",
@@ -145,6 +175,46 @@
           "Drones"
         ]
       }
+    },
+    "/v1/drones/{id}/mission": {
+      "post": {
+        "operationId": "Drones_StartDroneMission",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/dronesDronesStartDroneMissionBody"
+            }
+          }
+        ],
+        "tags": [
+          "Drones"
+        ]
+      }
     }
   },
   "definitions": {
@@ -152,6 +222,9 @@
       "type": "object",
       "properties": {
         "name": {
+          "type": "string"
+        },
+        "createdBy": {
           "type": "string"
         }
       }
@@ -164,6 +237,14 @@
         }
       }
     },
+    "dronesDronesStartDroneMissionBody": {
+      "type": "object",
+      "properties": {
+        "mission": {
+          "$ref": "#/definitions/modelMission"
+        }
+      }
+    },
     "dronesDronesUpdateDroneBody": {
       "type": "object",
       "properties": {
@@ -171,7 +252,7 @@
           "type": "string"
         },
         "status": {
-          "type": "string"
+          "$ref": "#/definitions/modelDroneStatus"
         }
       }
     },
@@ -183,11 +264,36 @@
         }
       }
     },
+    "dronesGetDronesByAuthorResponse": {
+      "type": "object",
+      "properties": {
+        "drones": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/modelDrone"
+          }
+        }
+      }
+    },
     "dronesUpdateDroneResponse": {
       "type": "object",
       "properties": {
         "drone": {
           "$ref": "#/definitions/modelDrone"
+        }
+      }
+    },
+    "modelCoordinate": {
+      "type": "object",
+      "properties": {
+        "latitude": {
+          "type": "number",
+          "format": "float"
+        },
+        "longitude": {
+          "type": "number",
+          "format": "float"
         }
       }
     },
@@ -202,7 +308,33 @@
           "type": "string"
         },
         "status": {
+          "$ref": "#/definitions/modelDroneStatus"
+        },
+        "createdBy": {
           "type": "string"
+        }
+      }
+    },
+    "modelDroneStatus": {
+      "type": "string",
+      "enum": [
+        "DRONE_STATUS_AVAILABLE",
+        "DRONE_STATUS_IN_MISSION",
+        "DRONE_STATUS_CHARGING",
+        "DRONE_STATUS_MAINTENANCE",
+        "DRONE_STATUS_OFFLINE"
+      ],
+      "default": "DRONE_STATUS_AVAILABLE"
+    },
+    "modelMission": {
+      "type": "object",
+      "properties": {
+        "coordinates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/modelCoordinate"
+          }
         }
       }
     },

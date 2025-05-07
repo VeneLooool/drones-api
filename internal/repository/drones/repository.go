@@ -23,9 +23,11 @@ func (r *Repo) Create(ctx context.Context, drone model.Drone) (model.Drone, erro
 	ib := sqlbuilder.PostgreSQL.NewInsertBuilder().InsertInto(Table).Cols(
 		Name.Short(),
 		Status.Short(),
+		CreatedBy.Short(),
 	).Values(
 		drone.Name,
 		drone.Status,
+		drone.CreatedBy,
 	)
 	query, args := common.ReturningAll(ib).Build()
 
@@ -57,6 +59,18 @@ func (r *Repo) Get(ctx context.Context, id uint64) (model.Drone, error) {
 	var result model.Drone
 	if err := pgxscan.Get(ctx, r.db, &result, query, args...); err != nil {
 		return model.Drone{}, err
+	}
+	return result, nil
+}
+
+func (r *Repo) GetByAuthor(ctx context.Context, authorLogin string) ([]model.Drone, error) {
+	sb := sqlbuilder.PostgreSQL.NewSelectBuilder().Select(common.All()).From(Table)
+	sb = sb.Where(sb.Equal(CreatedBy.Short(), authorLogin))
+	query, args := sb.Build()
+
+	var result []model.Drone
+	if err := pgxscan.Select(ctx, r.db, &result, query, args...); err != nil {
+		return nil, err
 	}
 	return result, nil
 }

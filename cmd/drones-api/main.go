@@ -2,11 +2,17 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
 
 	"github.com/VeneLooool/drones-api/internal/app/api/v1/drones"
+	drone_client "github.com/VeneLooool/drones-api/internal/clients/drone-client"
+	"github.com/VeneLooool/drones-api/internal/config"
+	"github.com/VeneLooool/drones-api/internal/handlers/external_drone_events"
+	"github.com/VeneLooool/drones-api/internal/kafka/drone-events/publisher"
+	"github.com/VeneLooool/drones-api/internal/kafka/external-drone-events/subscriber"
 	pb "github.com/VeneLooool/drones-api/internal/pb/api/v1/drones"
 	"github.com/VeneLooool/drones-api/internal/pkg/db"
 	drones_repo "github.com/VeneLooool/drones-api/internal/repository/drones"
@@ -20,18 +26,23 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	cfg, err := config.New(ctx)
+	if err != nil {
+		log.Fatalf("failed to create new config: %s", err.Error())
+	}
+
 	go func() {
-		if err := runGRPC(ctx); err != nil {
+		if err := runGRPC(ctx, cfg); err != nil {
 			log.Fatal(err)
 		}
 	}()
 
-	if err := runHTTPGateway(ctx); err != nil {
+	if err := runHTTPGateway(ctx, cfg); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func runGRPC(ctx context.Context) error {
+func runGRPC(ctx context.Context, cfg *config.Config) error {
 	grpcServer := grpc.NewServer()
 	defer grpcServer.GracefulStop()
 
@@ -41,27 +52,27 @@ func runGRPC(ctx context.Context) error {
 	}
 	defer dbAdapter.Close(ctx)
 
-	dronesServer, err := newServices(ctx, dbAdapter)
+	dronesServer, err := newServices(ctx, dbAdapter, cfg)
 	if err != nil {
 		return err
 	}
 	pb.RegisterDronesServer(grpcServer, dronesServer)
 
-	grpcListener, err := net.Listen("tcp", ":50051")
+	grpcListener, err := net.Listen("tcp", fmt.Sprintf(":%s", cfg.GrpcPort))
 	if err != nil {
 		log.Fatalf("failed to listen: %s", err.Error())
 	}
 
-	log.Println("gRPC server listening on :50051")
+	log.Printf("gRPC server listening on :%s\n", cfg.GrpcPort)
 	if err = grpcServer.Serve(grpcListener); err != nil {
 		return err
 	}
 	return nil
 }
 
-func runHTTPGateway(ctx context.Context) error {
+func runHTTPGateway(ctx context.Context, cfg *config.Config) error {
 	mux := runtime.NewServeMux()
-	err := pb.RegisterDronesHandlerFromEndpoint(ctx, mux, "localhost:50051", []grpc.DialOption{
+	err := pb.RegisterDronesHandlerFromEndpoint(ctx, mux, fmt.Sprintf("localhost:%s", cfg.GrpcPort), []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	})
 	if err != nil {
@@ -77,20 +88,51 @@ func runHTTPGateway(ctx context.Context) error {
 		http.ServeFile(w, r, "./internal/pb/api/v1/drones/drones.swagger.json")
 	})
 
-	// gRPC → REST mux
-	http.Handle("/", mux)
+	withCORS := func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
-	log.Println("HTTP gateway listening on :8080")
-	if err = http.ListenAndServe(":8080", nil); err != nil {
+			// Для preflight-запросов
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			h.ServeHTTP(w, r)
+		})
+	}
+
+	// gRPC → REST mux
+	http.Handle("/", withCORS(mux))
+
+	log.Printf("HTTP gateway listening on :%s\n", cfg.HttpPort)
+	if err = http.ListenAndServe(fmt.Sprintf(":%s", cfg.HttpPort), nil); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func newServices(ctx context.Context, dbAdapter db.DataBase) (*drones.Implementation, error) {
+func newServices(ctx context.Context, dbAdapter db.DataBase, cfg *config.Config) (*drones.Implementation, error) {
+	droneEventsPublisher := publisher.New(ctx, cfg.GetKafkaConfig())
+
+	droneClient, err := drone_client.New(ctx, cfg.GetDroneClientConfig())
+	if err != nil {
+		return nil, err
+	}
+
 	dronesRepo := drones_repo.New(dbAdapter)
-	dronesUC := drones_uc.New(dronesRepo)
+	dronesUC := drones_uc.New(dronesRepo, droneEventsPublisher, droneClient)
+
+	newHandlers(ctx, dronesUC, cfg)
 
 	return drones.NewService(dronesUC), nil
+}
+
+func newHandlers(ctx context.Context, dronesUC *drones_uc.UseCase, cfg *config.Config) {
+	handler := external_drone_events.New(dronesUC)
+	sub := subscriber.New(ctx, handler, cfg.GetKafkaConfig())
+	sub.Subscribe(ctx)
 }

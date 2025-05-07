@@ -20,10 +20,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Drones_CreateDrone_FullMethodName  = "/drones_api.api.v1.drones.Drones/CreateDrone"
-	Drones_UpdateDrone_FullMethodName  = "/drones_api.api.v1.drones.Drones/UpdateDrone"
-	Drones_GetDroneByID_FullMethodName = "/drones_api.api.v1.drones.Drones/GetDroneByID"
-	Drones_DeleteDrone_FullMethodName  = "/drones_api.api.v1.drones.Drones/DeleteDrone"
+	Drones_CreateDrone_FullMethodName       = "/drones_api.api.v1.drones.Drones/CreateDrone"
+	Drones_UpdateDrone_FullMethodName       = "/drones_api.api.v1.drones.Drones/UpdateDrone"
+	Drones_GetDroneByID_FullMethodName      = "/drones_api.api.v1.drones.Drones/GetDroneByID"
+	Drones_GetDronesByAuthor_FullMethodName = "/drones_api.api.v1.drones.Drones/GetDronesByAuthor"
+	Drones_DeleteDrone_FullMethodName       = "/drones_api.api.v1.drones.Drones/DeleteDrone"
+	Drones_StartDroneMission_FullMethodName = "/drones_api.api.v1.drones.Drones/StartDroneMission"
 )
 
 // DronesClient is the client API for Drones service.
@@ -33,7 +35,9 @@ type DronesClient interface {
 	CreateDrone(ctx context.Context, in *CreateDrone_Request, opts ...grpc.CallOption) (*CreateDrone_Response, error)
 	UpdateDrone(ctx context.Context, in *UpdateDrone_Request, opts ...grpc.CallOption) (*UpdateDrone_Response, error)
 	GetDroneByID(ctx context.Context, in *GetDroneByID_Request, opts ...grpc.CallOption) (*GetDroneByID_Response, error)
+	GetDronesByAuthor(ctx context.Context, in *GetDronesByAuthor_Request, opts ...grpc.CallOption) (*GetDronesByAuthor_Response, error)
 	DeleteDrone(ctx context.Context, in *DeleteDrone_Request, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	StartDroneMission(ctx context.Context, in *StartDroneMission_Request, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type dronesClient struct {
@@ -74,10 +78,30 @@ func (c *dronesClient) GetDroneByID(ctx context.Context, in *GetDroneByID_Reques
 	return out, nil
 }
 
+func (c *dronesClient) GetDronesByAuthor(ctx context.Context, in *GetDronesByAuthor_Request, opts ...grpc.CallOption) (*GetDronesByAuthor_Response, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDronesByAuthor_Response)
+	err := c.cc.Invoke(ctx, Drones_GetDronesByAuthor_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *dronesClient) DeleteDrone(ctx context.Context, in *DeleteDrone_Request, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, Drones_DeleteDrone_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dronesClient) StartDroneMission(ctx context.Context, in *StartDroneMission_Request, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Drones_StartDroneMission_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +115,9 @@ type DronesServer interface {
 	CreateDrone(context.Context, *CreateDrone_Request) (*CreateDrone_Response, error)
 	UpdateDrone(context.Context, *UpdateDrone_Request) (*UpdateDrone_Response, error)
 	GetDroneByID(context.Context, *GetDroneByID_Request) (*GetDroneByID_Response, error)
+	GetDronesByAuthor(context.Context, *GetDronesByAuthor_Request) (*GetDronesByAuthor_Response, error)
 	DeleteDrone(context.Context, *DeleteDrone_Request) (*emptypb.Empty, error)
+	StartDroneMission(context.Context, *StartDroneMission_Request) (*emptypb.Empty, error)
 	mustEmbedUnimplementedDronesServer()
 }
 
@@ -111,8 +137,14 @@ func (UnimplementedDronesServer) UpdateDrone(context.Context, *UpdateDrone_Reque
 func (UnimplementedDronesServer) GetDroneByID(context.Context, *GetDroneByID_Request) (*GetDroneByID_Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDroneByID not implemented")
 }
+func (UnimplementedDronesServer) GetDronesByAuthor(context.Context, *GetDronesByAuthor_Request) (*GetDronesByAuthor_Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDronesByAuthor not implemented")
+}
 func (UnimplementedDronesServer) DeleteDrone(context.Context, *DeleteDrone_Request) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteDrone not implemented")
+}
+func (UnimplementedDronesServer) StartDroneMission(context.Context, *StartDroneMission_Request) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartDroneMission not implemented")
 }
 func (UnimplementedDronesServer) mustEmbedUnimplementedDronesServer() {}
 func (UnimplementedDronesServer) testEmbeddedByValue()                {}
@@ -189,6 +221,24 @@ func _Drones_GetDroneByID_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Drones_GetDronesByAuthor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDronesByAuthor_Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DronesServer).GetDronesByAuthor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Drones_GetDronesByAuthor_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DronesServer).GetDronesByAuthor(ctx, req.(*GetDronesByAuthor_Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Drones_DeleteDrone_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteDrone_Request)
 	if err := dec(in); err != nil {
@@ -203,6 +253,24 @@ func _Drones_DeleteDrone_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DronesServer).DeleteDrone(ctx, req.(*DeleteDrone_Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Drones_StartDroneMission_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartDroneMission_Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DronesServer).StartDroneMission(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Drones_StartDroneMission_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DronesServer).StartDroneMission(ctx, req.(*StartDroneMission_Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -227,8 +295,16 @@ var Drones_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Drones_GetDroneByID_Handler,
 		},
 		{
+			MethodName: "GetDronesByAuthor",
+			Handler:    _Drones_GetDronesByAuthor_Handler,
+		},
+		{
 			MethodName: "DeleteDrone",
 			Handler:    _Drones_DeleteDrone_Handler,
+		},
+		{
+			MethodName: "StartDroneMission",
+			Handler:    _Drones_StartDroneMission_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

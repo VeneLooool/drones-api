@@ -8,7 +8,9 @@ require (
 	github.com/huandu/go-sqlbuilder v1.30.0
 	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgx/v4 v4.18.3
+	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.47.0
+	github.com/segmentio/kafka-go v0.4.47
 	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142
 	google.golang.org/grpc v1.64.1
 	google.golang.org/protobuf v1.34.2
@@ -23,6 +25,8 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/pgtype v1.14.0 // indirect
 	github.com/jackc/puddle v1.3.0 // indirect
+	github.com/klauspost/compress v1.15.9 // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	golang.org/x/crypto v0.24.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect

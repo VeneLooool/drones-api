@@ -8,8 +8,6 @@ import (
 )
 
 type DataBase interface {
-	Conn() *pgx.Conn
-
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
 	Query(ctx context.Context, sql string, arguments ...any) (pgx.Rows, error)
 }

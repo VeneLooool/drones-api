@@ -4,8 +4,17 @@ package drones_api.api.v1.model;
 
 option go_package = "github.com/VeneLooool/drones-api/pkg/api/v1/model;model";
 
+enum DroneStatus {
+  DRONE_STATUS_AVAILABLE = 0;
+  DRONE_STATUS_IN_MISSION = 1;
+  DRONE_STATUS_CHARGING = 2;
+  DRONE_STATUS_MAINTENANCE = 3;
+  DRONE_STATUS_OFFLINE = 4;
+}
+
 message Drone {
   uint64 id = 1;
   string name = 2;
-  string status = 3;
+  DroneStatus status = 3;
+  string created_by = 4;
 }

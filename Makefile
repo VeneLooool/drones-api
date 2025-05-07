@@ -38,6 +38,7 @@ proto: check-tools
 			--go_out=$(OUT_DIR) \
 			--go_opt=paths=source_relative \
 			--go_opt=Mapi/v1/model/drones.proto=github.com/VeneLooool/drones-api/internal/pb/api/v1/model \
+			--go_opt=Mapi/v1/model/mission.proto=github.com/VeneLooool/drones-api/internal/pb/api/v1/model \
 			--go-grpc_out=$(OUT_DIR) \
 			--go-grpc_opt=paths=source_relative \
 			--grpc-gateway_out=$(OUT_DIR) \
@@ -52,3 +53,31 @@ install-tools:
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
+
+
+# ---------- таргет: один сервис ----------
+# Пример: make generate-client SERVICE=fields-api
+generate-client: check-tools
+ifndef SERVICE
+	$(error Specify SERVICE=<dir inside vendor.protogen>)
+endif
+	@echo "▶︎  Generating client for service: $(SERVICE)"
+
+	# все .proto этого сервиса
+	$(eval PROTOS := $(shell find vendor.protogen/$(SERVICE) -name "*.proto"))
+
+	# куда кладём
+	$(eval OUT_ROOT := internal/pb/$(SERVICE))
+	@mkdir -p $(OUT_ROOT)
+
+	# единый protoc
+	protoc \
+		-I vendor.protogen \
+		-I vendor.protogen/$(SERVICE) \
+		--go_out=$(OUT_ROOT) \
+		--go_opt=paths=source_relative \
+		--go-grpc_out=$(OUT_ROOT) \
+		--go-grpc_opt=paths=source_relative \
+		$(PROTOS)
+
+	@echo "✅  OK — client in $(OUT_ROOT)"

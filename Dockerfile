@@ -16,6 +16,6 @@ COPY --from=builder /app/drones-api .
 COPY swagger-ui ./swagger-ui/
 COPY internal ./internal/
 
-EXPOSE 8080 50051
+EXPOSE 8081 50052
 
 CMD ["./drones-api"]

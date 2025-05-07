@@ -7,6 +7,7 @@ option go_package = "github.com/VeneLooool/drones-api/pkg/api/v1/drones;drones";
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "api/v1/model/drones.proto";
+import "api/v1/model/mission.proto";
 
 service Drones {
   rpc CreateDrone(CreateDrone.Request) returns (CreateDrone.Response) {
@@ -26,9 +27,21 @@ service Drones {
       get: "/v1/drones/{id}"
     };
   }
+  rpc GetDronesByAuthor(GetDronesByAuthor.Request) returns (GetDronesByAuthor.Response) {
+    option (google.api.http) = {
+      get: "/v1/drones/authors/{login}"
+    };
+  }
   rpc DeleteDrone(DeleteDrone.Request) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/v1/drones/{id}"
+    };
+  }
+
+  rpc StartDroneMission(StartDroneMission.Request) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/drones/{id}/mission"
+      body: "*"
     };
   }
 }
@@ -36,6 +49,7 @@ service Drones {
 message CreateDrone {
   message Request {
     string name = 1;
+    string created_by = 2;
   }
   message Response {
     model.Drone drone = 1;
@@ -46,7 +60,7 @@ message UpdateDrone {
   message Request {
     uint64 id = 1;
     string name = 2;
-    string status = 3;
+    model.DroneStatus status = 3;
   }
   message Response {
     model.Drone drone = 1;
@@ -62,8 +76,24 @@ message GetDroneByID {
   }
 }
 
+message GetDronesByAuthor {
+  message Request {
+    string login = 1;
+  }
+  message Response {
+    repeated model.Drone drones = 1;
+  }
+}
+
 message DeleteDrone {
   message Request {
     uint64 id = 1;
+  }
+}
+
+message StartDroneMission {
+  message Request {
+    uint64 id = 1;
+    model.Mission mission = 2;
   }
 }
